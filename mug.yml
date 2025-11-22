@@ -1,0 +1,16 @@
+# mug's config file.
+# You can delete this file and it will not polute your project's tree.
+# You can empty this file and run `mug init` to reset it to default.
+debug: false
+
+watch:
+  active: true
+  inject_envs: .env
+  gen: true
+  mod_tidy: true
+  delay: 300
+
+gen:
+  router: true
+  envs: true
+  swagger: true

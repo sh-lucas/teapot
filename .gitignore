@@ -1,0 +1,5 @@
+.env
+client*.log
+*.log
+teapot-client
+teapot-server
