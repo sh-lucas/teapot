@@ -12,6 +12,7 @@ import (
 
 func Route(addr string) {
 	router := chi.NewRouter()
+	router.Use(logs.CORSMiddleware)
 
 	// handlers:
 	router.HandleFunc("POST /log", logs.SaveLog)

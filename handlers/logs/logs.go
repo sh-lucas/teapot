@@ -17,6 +17,21 @@ import (
 	"github.com/sh-lucas/teapot/cup"
 )
 
+func CORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 type LogManager struct {
 	mu      sync.RWMutex
 	writers map[string]chan string
@@ -91,16 +106,6 @@ func writerLoop(client string, ch chan string) {
 
 // mug:handler POST /log
 func SaveLog(w http.ResponseWriter, r *http.Request) {
-	// CORS
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	writeSecret := cup.WRITE_SECRET
 	if writeSecret == "" {
 		http.Error(w, "Server configuration error", http.StatusInternalServerError)
@@ -184,16 +189,6 @@ func SaveLog(w http.ResponseWriter, r *http.Request) {
 
 // mug:handler GET /logs/{clientName}
 func GetLog(w http.ResponseWriter, r *http.Request) {
-	// CORS
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	readSecret := cup.READ_SECRET
 	if readSecret == "" {
 		http.Error(w, "Server configuration error", http.StatusInternalServerError)

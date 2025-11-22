@@ -103,9 +103,12 @@ async function fetchLogs() {
 
   try {
     const url = `${state.host}/logs/${state.currentFile}?n=${state.lines}`;
+    const secret = state.secret.trim();
+    const authHeader = secret.startsWith('Bearer ') ? secret : `Bearer ${secret}`;
+
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${state.secret}`
+        'Authorization': authHeader
       }
     });
 
