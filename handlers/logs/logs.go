@@ -196,8 +196,24 @@ func GetLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authHeader := r.Header.Get("Authorization")
+
+	fmt.Printf("DEBUG: Received Authorization: '%s'\n", authHeader)
+	fmt.Printf("DEBUG: Expected readSecret: '%s'\n", readSecret)
+	fmt.Printf("DEBUG: Expected 'Bearer '+readSecret: '%s'\n", "Bearer "+readSecret)
+	
 	// Allow "Bearer SECRET" or just "SECRET"
 	if authHeader != readSecret && authHeader != "Bearer "+readSecret {
+		fmt.Printf("DEBUG: Auth failed! No match.\n")
+	}
+	
+	// Normalize: remove "Bearer " prefix if present and trim whitespace
+	authValue := strings.TrimSpace(authHeader)
+	if strings.HasPrefix(authValue, "Bearer ") {
+		authValue = strings.TrimSpace(authValue[7:]) // Remove "Bearer " (7 chars)
+	}
+	
+	// Compare the normalized values
+	if authValue != strings.TrimSpace(readSecret) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

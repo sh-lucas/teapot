@@ -38,11 +38,9 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Copy the binary
 COPY --from=builder /teapot /teapot
 
-# Copy the app directory (for logs)
-# We copy the directory itself to ensure it exists and has the right permissions
-COPY --from=builder --chown=1001:1001 /app /app
-
-WORKDIR /app
+# Set working directory to /data for logs
+# The directory will be created automatically when we mount a volume
+WORKDIR /data
 
 # Switch to non-root user
 USER teapot
