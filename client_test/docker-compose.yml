@@ -1,6 +1,6 @@
 services:
   client-test:
-    image: catnipbrewer/teapot-client:v1.0.4
+    image: catnipbrewer/teapot-client:v1.0.7
     container_name: teapot_client_test
     # We override the command to run teapot with our specific flags
     # Usage: teapot -k <secret> -h <host> -c <client_name> <command> [args...]
