@@ -14,11 +14,13 @@ import (
 
 // Config holds the client configuration
 type Config struct {
-	Secret   string
-	Host     string
-	Command  string
-	Args     []string
-	Insecure bool // For testing (allows HTTP)
+	Secret     string
+	Host       string
+	Command    string
+	Args       []string
+	Insecure   bool // For testing (allows HTTP)
+	ClientBase string
+	SuffixEnv  string
 }
 
 func parseArgs() Config {
@@ -29,9 +31,19 @@ func parseArgs() Config {
 		arg := args[i]
 		if strings.HasPrefix(arg, "-") {
 			switch arg {
-			case "-s":
+			case "-k": // Secret (formerly -s)
 				if i+1 < len(args) {
 					cfg.Secret = args[i+1]
+					i++
+				}
+			case "-s": // Suffix Env Var
+				if i+1 < len(args) {
+					cfg.SuffixEnv = args[i+1]
+					i++
+				}
+			case "-c": // Client Base Name
+				if i+1 < len(args) {
+					cfg.ClientBase = args[i+1]
 					i++
 				}
 			case "-h":
@@ -42,11 +54,7 @@ func parseArgs() Config {
 			case "--insecure":
 				cfg.Insecure = true
 			default:
-				// Unknown flag, assume it's the command start if it doesn't look like our flag?
-				// Requirement: "recieve the first argument as the name of the command to run"
-				// But also "recieve flags".
-				// Usually flags come before the command.
-				// If we hit something that isn't a known flag, we treat it as the command.
+				// Unknown flag, assume it's the command start
 				cfg.Command = arg
 				cfg.Args = args[i+1:]
 				return cfg
@@ -65,9 +73,25 @@ func main() {
 	cfg := parseArgs()
 
 	if cfg.Command == "" {
-		fmt.Println("Usage: teapot -s <secret> -h <host> <command> [args...]")
+		fmt.Println("Usage: teapot -k <secret> -h <host> -c <client_name> [-s <suffix_env>] <command> [args...]")
 		os.Exit(1)
 	}
+
+	if cfg.ClientBase == "" {
+		fmt.Println("Client name is required (-c)")
+		os.Exit(1)
+	}
+
+	// Construct final client name
+	finalClientName := cfg.ClientBase
+	if cfg.SuffixEnv != "" {
+		suffixVal := os.Getenv(cfg.SuffixEnv)
+		if len(suffixVal) > 4 {
+			suffixVal = suffixVal[:4]
+		}
+		finalClientName += suffixVal
+	}
+
 
 	if cfg.Host == "" {
 		fmt.Println("Host is required (-h)")
@@ -156,10 +180,10 @@ func main() {
 			select {
 			case <-done:
 				// Final flush
-				flushLogs(client, cfg, &mu, &buffer)
+				flushLogs(client, cfg, finalClientName, &mu, &buffer)
 				return
 			case <-ticker.C:
-				flushLogs(client, cfg, &mu, &buffer)
+				flushLogs(client, cfg, finalClientName, &mu, &buffer)
 			}
 		}
 	}()
@@ -183,7 +207,7 @@ func main() {
 	}
 }
 
-func flushLogs(client *http.Client, cfg Config, mu *sync.Mutex, buffer *bytes.Buffer) {
+func flushLogs(client *http.Client, cfg Config, clientName string, mu *sync.Mutex, buffer *bytes.Buffer) {
 	mu.Lock()
 	if buffer.Len() == 0 {
 		mu.Unlock()
@@ -199,7 +223,7 @@ func flushLogs(client *http.Client, cfg Config, mu *sync.Mutex, buffer *bytes.Bu
 		return
 	}
 
-	req.SetBasicAuth(cfg.Secret, cfg.Command)
+	req.SetBasicAuth(cfg.Secret, clientName)
 	req.Header.Set("Content-Type", "text/plain")
 
 	resp, err := client.Do(req)
