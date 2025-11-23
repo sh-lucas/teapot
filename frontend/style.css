@@ -148,6 +148,7 @@ body {
     flex-direction: column;
     padding: 10px;
     overflow: hidden;
+    position: relative; /* Establish positioning context for floating button */
 }
 
 #log-header {
