@@ -1,8 +1,8 @@
 services:
   client-test:
-    image: catnipbrewer/teapot-client:v1.0.1
+    image: catnipbrewer/teapot-client:v1.0.4
     container_name: teapot_client_test
     # We override the command to run teapot with our specific flags
     # Usage: teapot -k <secret> -h <host> -c <client_name> <command> [args...]
-    command: teapot -k qwertyuiop_tui -h https://oscar-contests-council-lat.trycloudflare.com -c docker-client-test sh -c "while true; do echo 'Hello from Docker Client Test'; sleep 2; done"
+    command: teapot -k qwertyuiop_tui -h https://oscar-contests-council-lat.trycloudflare.com -c docker-client-test sh -c 'i=0; while true; do echo "Log count $$i"; i=$$((i+1)); sleep 0.5; done'
     restart: unless-stopped

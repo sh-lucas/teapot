@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -21,6 +22,7 @@ type Config struct {
 	Insecure   bool // For testing (allows HTTP)
 	ClientBase string
 	SuffixEnv  string
+	Silent     bool // Suppress stdout/stderr output
 }
 
 func parseArgs() Config {
@@ -53,6 +55,8 @@ func parseArgs() Config {
 				}
 			case "--insecure":
 				cfg.Insecure = true
+			case "--silent":
+				cfg.Silent = true
 			default:
 				// Unknown flag, assume it's the command start
 				cfg.Command = arg
@@ -141,13 +145,18 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	var printCounter int64
+
 	// Stream stdout
 	go func() {
 		defer wg.Done()
 		scanner := bufio.NewScanner(stdoutPipe)
 		for scanner.Scan() {
 			line := scanner.Text()
-			fmt.Println(line) // Print to terminal
+			if !cfg.Silent {
+				count := atomic.AddInt64(&printCounter, 1)
+				fmt.Printf("STDOUT (%d): %s\n", count, line)
+			}
 			
 			mu.Lock()
 			buffer.WriteString(line + "\n")
@@ -161,7 +170,9 @@ func main() {
 		scanner := bufio.NewScanner(stderrPipe)
 		for scanner.Scan() {
 			line := scanner.Text()
-			fmt.Fprintln(os.Stderr, line) // Print to terminal stderr
+			if !cfg.Silent {
+				fmt.Fprintln(os.Stderr, "STDERR:", line) // Print to terminal stderr
+			}
 			
 			mu.Lock()
 			buffer.WriteString(line + "\n")
@@ -213,7 +224,10 @@ func flushLogs(client *http.Client, cfg Config, clientName string, mu *sync.Mute
 		mu.Unlock()
 		return
 	}
-	data := buffer.Bytes()
+	// Make a copy of the data to avoid race conditions with concurrent writes
+	// after buffer.Reset()
+	data := make([]byte, buffer.Len())
+	copy(data, buffer.Bytes())
 	buffer.Reset()
 	mu.Unlock()
 
