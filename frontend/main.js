@@ -1,12 +1,13 @@
+
 // State
 const state = {
   host: localStorage.getItem('teapot_host') || '',
   secret: localStorage.getItem('teapot_secret') || '',
   files: JSON.parse(localStorage.getItem('teapot_files') || '[]'),
   currentFile: null,
-  lines: 50,
+  lines: 70,
   skip: 0,
-  isTailing: true,
+  isTailing: true, // "Watching" state
   isLoading: false,
   pollInterval: null
 };
@@ -23,7 +24,7 @@ const currentFileName = document.getElementById('current-file-name');
 const logContent = document.getElementById('log-content');
 const logContainer = document.getElementById('log-container');
 const loadingIndicator = document.getElementById('loading-indicator');
-const liveBadge = document.getElementById('live-badge');
+const scrollDownBtn = document.getElementById('scroll-down-btn');
 const linesInput = document.getElementById('lines-input');
 const refreshBtn = document.getElementById('refresh-btn');
 
@@ -61,11 +62,17 @@ newFileInput.addEventListener('keypress', (e) => {
 
 refreshBtn.addEventListener('click', () => fetchLogs(true));
 linesInput.addEventListener('change', (e) => {
-  state.lines = parseInt(e.target.value) || 50;
+  state.lines = parseInt(e.target.value) || 70;
   if (state.currentFile) fetchLogs(true);
 });
 
 logContainer.addEventListener('scroll', handleScroll);
+scrollDownBtn.addEventListener('click', () => {
+  scrollToBottom();
+  state.isTailing = true;
+  updateUIState();
+  fetchLogs(false); // Immediate refresh
+});
 
 // Functions
 function addFile() {
@@ -110,14 +117,22 @@ function handleScroll() {
   }
 
   // Detect scroll to bottom (Toggle Tailing)
-  // Allow a small buffer (e.g., 10px)
-  const isAtBottom = scrollHeight - scrollTop - clientHeight <= 10;
+  // Allow a small buffer (e.g., 20px)
+  const isAtBottom = scrollHeight - scrollTop - clientHeight <= 20;
+
   if (isAtBottom) {
     state.isTailing = true;
-    liveBadge.classList.remove('hidden');
   } else {
     state.isTailing = false;
-    liveBadge.classList.add('hidden');
+  }
+  updateUIState();
+}
+
+function updateUIState() {
+  if (state.isTailing) {
+    scrollDownBtn.classList.add('hidden');
+  } else {
+    scrollDownBtn.classList.remove('hidden');
   }
 }
 
@@ -134,20 +149,16 @@ async function loadMoreLogs() {
   const nextSkip = state.skip + state.lines;
 
   try {
+    // Fetch older logs: n=lines, skip=nextSkip
     const logs = await fetchLogData(state.lines, nextSkip);
     if (logs) {
-      // Prepend logs
-      // Note: The server returns logs in chronological order (oldest to newest) for the requested window.
-      // But since we are fetching *older* logs (skipping more from the end), these are effectively "previous pages".
-      // We should prepend them.
-
       if (logs.trim().length > 0) {
         logContent.textContent = logs + '\n' + logContent.textContent;
         state.skip = nextSkip;
 
         // Restore scroll position
-        // The new content pushed everything down. We want to stay at the same relative position.
         // New scroll top = New Height - Old Height
+        // This keeps the view stable
         logContainer.scrollTop = logContainer.scrollHeight - oldHeight;
       }
     }
@@ -173,7 +184,11 @@ async function fetchLogs(reset = false) {
   }
 
   try {
-    const logs = await fetchLogData(state.lines, 0); // Always fetch latest for initial load/refresh
+    // If tailing, we want the LATEST logs, so skip=0
+    // If NOT tailing (looking up), we generally don't auto-refresh the view
+    // But if this is a manual refresh (reset=true), we fetch latest.
+
+    const logs = await fetchLogData(state.lines, 0);
     if (logs !== null) {
       logContent.textContent = logs || '(No logs found)';
       if (state.isTailing) {
@@ -186,9 +201,9 @@ async function fetchLogs(reset = false) {
 }
 
 async function fetchLogData(n, skip) {
-  const url = `${state.host}/logs/${state.currentFile}?n=${n}&skip=${skip}`;
+  const url = `${state.host} /logs/${state.currentFile}?n = ${n}& skip=${skip} `;
   const secret = state.secret.trim();
-  const authHeader = secret.startsWith('Bearer ') ? secret : `Bearer ${secret}`;
+  const authHeader = secret.startsWith('Bearer ') ? secret : `Bearer ${secret} `;
 
   const response = await fetch(url, {
     headers: {
@@ -198,8 +213,8 @@ async function fetchLogData(n, skip) {
 
   if (!response.ok) {
     if (response.status === 401) throw new Error('Unauthorized (Check Secret)');
-    if (response.status === 404) return ''; // File not found yet
-    throw new Error(`Error: ${response.statusText}`);
+    if (response.status === 404) return '';
+    throw new Error(`Error: ${response.statusText} `);
   }
 
   return await response.text();
@@ -208,14 +223,11 @@ async function fetchLogData(n, skip) {
 function startPolling() {
   if (state.pollInterval) clearInterval(state.pollInterval);
   state.pollInterval = setInterval(async () => {
+    // Only poll if we are in "Watching" state (isTailing)
     if (state.currentFile && state.isTailing && !state.isLoading) {
-      // Poll for latest logs
       try {
         const logs = await fetchLogData(state.lines, 0);
         if (logs !== null) {
-          // Only update if changed to avoid flickering? 
-          // Or just replace. Replacing is easiest for now.
-          // Ideally we'd diff, but for simple logs, replacing is fine.
           if (logContent.textContent !== logs) {
             logContent.textContent = logs || '(No logs found)';
             scrollToBottom();
@@ -230,8 +242,8 @@ function startPolling() {
 
 function scrollToBottom() {
   logContainer.scrollTop = logContainer.scrollHeight;
-  liveBadge.classList.remove('hidden');
 }
 
 // Start
 init();
+

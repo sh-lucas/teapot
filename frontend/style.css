@@ -218,27 +218,25 @@ body {
     border-radius: 4px;
 }
 
-.badge {
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.badge.hidden {
-    display: none;
-}
-
-#live-badge {
-    background-color: #28a745;
+#scroll-down-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--accent-color);
     color: white;
-    animation: pulse 2s infinite;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    font-weight: bold;
+    z-index: 10;
+    opacity: 0.9;
+    transition: opacity 0.2s;
 }
 
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+#scroll-down-btn:hover {
+    opacity: 1;
 }
 
 .hidden {
