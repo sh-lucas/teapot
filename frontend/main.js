@@ -201,9 +201,9 @@ async function fetchLogs(reset = false) {
 }
 
 async function fetchLogData(n, skip) {
-  const url = `${state.host}/logs/${state.currentFile}?n = ${n}& skip=${skip} `;
+  const url = `${state.host}/logs/${state.currentFile}?n=${n}&skip=${skip}`;
   const secret = state.secret.trim();
-  const authHeader = secret.startsWith('Bearer ') ? secret : `Bearer ${secret} `;
+  const authHeader = secret.startsWith('Bearer ') ? secret : `Bearer ${secret}`;
 
   const response = await fetch(url, {
     headers: {
