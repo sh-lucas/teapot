@@ -82,6 +82,9 @@ body {
     cursor: pointer;
     border-radius: 3px;
     margin-bottom: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #file-list li:hover {
@@ -91,6 +94,34 @@ body {
 #file-list li.active {
     background-color: #37373d;
     color: white;
+}
+
+.file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.delete-file-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 0.9rem;
+    border-radius: 3px;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s, color 0.2s;
+}
+
+#file-list li:hover .delete-file-btn {
+    opacity: 1; /* Show on hover */
+}
+
+.delete-file-btn:hover {
+    color: #ff4d4d; /* Red on hover */
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Main Content */

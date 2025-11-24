@@ -90,13 +90,46 @@ function renderFileList() {
   fileList.innerHTML = '';
   state.files.forEach(file => {
     const li = document.createElement('li');
-    li.textContent = file;
+
+    const span = document.createElement('span');
+    span.textContent = file;
+    span.className = 'file-name';
+    span.addEventListener('click', () => selectFile(file));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑';
+    deleteBtn.className = 'delete-file-btn';
+    deleteBtn.title = 'Remove from list';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteFile(file);
+    });
+
+    li.appendChild(span);
+    li.appendChild(deleteBtn);
+
     if (file === state.currentFile) {
       li.classList.add('active');
     }
-    li.addEventListener('click', () => selectFile(file));
+
     fileList.appendChild(li);
   });
+}
+
+function deleteFile(file) {
+  if (!confirm(`Are you sure you want to remove "${file}" from the list?`)) return;
+
+  state.files = state.files.filter(f => f !== file);
+  localStorage.setItem('teapot_files', JSON.stringify(state.files));
+
+  if (state.currentFile === file) {
+    state.currentFile = null;
+    currentFileName.textContent = 'Select a file';
+    logContent.textContent = 'Logs will appear here...';
+    state.isTailing = false;
+  }
+
+  renderFileList();
 }
 
 function selectFile(file) {
