@@ -237,6 +237,9 @@ body {
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.9rem;
     white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
     flex: 1;
 }
 
