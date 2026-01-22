@@ -119,9 +119,21 @@ body {
     opacity: 1; /* Show on hover */
 }
 
+
 .delete-file-btn:hover {
     color: #ff4d4d; /* Red on hover */
     background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Drag and Drop Styles */
+#file-list li.dragging {
+    opacity: 0.5;
+    background-color: var(--hover-bg);
+    border: 1px dashed var(--accent-color);
+}
+
+#file-list li.over {
+    border-bottom: 2px solid var(--accent-color);
 }
 
 /* Main Content */

@@ -88,8 +88,48 @@ function addFile() {
 
 function renderFileList() {
   fileList.innerHTML = '';
-  state.files.forEach(file => {
+  state.files.forEach((file, index) => {
     const li = document.createElement('li');
+    li.draggable = true; // Enable dragging
+
+    // Drag events
+    li.addEventListener('dragstart', (e) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index); // Store index
+      li.classList.add('dragging');
+    });
+
+    li.addEventListener('dragend', () => {
+      li.classList.remove('dragging');
+      document.querySelectorAll('#file-list li').forEach(item => item.classList.remove('over'));
+    });
+
+    li.addEventListener('dragover', (e) => {
+      e.preventDefault(); // Necessary to allow dropping
+      e.dataTransfer.dropEffect = 'move';
+      li.classList.add('over');
+    });
+
+    li.addEventListener('dragleave', () => {
+      li.classList.remove('over');
+    });
+
+    li.addEventListener('drop', (e) => {
+      e.stopPropagation(); // Stops the browser from redirecting.
+      li.classList.remove('over');
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIndex = index;
+
+      if (fromIndex !== toIndex) {
+        // Reorder array
+        const movedItem = state.files.splice(fromIndex, 1)[0];
+        state.files.splice(toIndex, 0, movedItem);
+
+        // Save and re-render
+        localStorage.setItem('teapot_files', JSON.stringify(state.files));
+        renderFileList();
+      }
+    });
 
     const span = document.createElement('span');
     span.textContent = file;
