@@ -1,14 +1,18 @@
-# **teapot** é um servidor de logging
-  A ideia central é ter um servidor simples que receba logs em formato plain-text e os guarde em um arquivo.
-  Cada backend (ou cliente) terá uma chave de autenticação que deve ser enviada no header Authorization.
-  Através dessa chave de autenticação o teapot irá identificar o backend e salvará o log em um arquivo com o exato nome do backend.
+# **teapot**
+  A simple cli wrapper that gets all the output from your application into a buffer and sends every 100 lines to your private deployment url.    
+  Made for when Promtail is overkill or the Sidecar config is not accessible, and you still have work to do.    
+  It's simple, efficient and (relatively) secure, but **not intended for production deployments**.    
+  It's **absolutely necessary to have https**. The cli will crash on boot if you try http.    
+  > I recommend cloudflare tunnels for a easy-to-setup, secure and reliable https endpoint.     
   
-  Esse repositório é apenas o backend =p
+  ****:
+  - Basic Auth: you set up a key for reading and a key for writing logs. Simpler is safer.    
+  - Asyncysh: asyncronous, non-blocking loop; might lose some logs if network is down, but your app runs smoothly.    
+  - Statelessly: not really; but restarting either the containers is usually ok.    
 
 
-
-## Sobre o framework/cli mug (home-brewed)
-- Os arquivos dentro de ./cup são gerados automaticamente.
-- Rode `mug gen` para gerar os arquivos.
-- As diretivas `// mug:handler` serve para declarar um handler na rota especificada no padrão do chi.
-- As variáveis de ambiente também são injetadas em `./cup/envs.go` `=)`
+## Sobre o framework/mug (home-brewed)
+- You should `go install github.com/sh-lucas/mug@latest`.
+- Run `mug gen` to generate the glue files.
+- The directives `// mug:handler` declares chi endpoints and common middlewares.
+- dotenv is unecessary because mug generates `./cup/envs.go`; good hacking `=)`
