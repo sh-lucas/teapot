@@ -280,7 +280,8 @@ async function fetchLogData(n, skip) {
 
   const response = await fetch(url, {
     headers: {
-      'Authorization': authHeader
+      'Authorization': authHeader,
+      'ngrok-skip-browser-warning': 'true'
     }
   });
 
